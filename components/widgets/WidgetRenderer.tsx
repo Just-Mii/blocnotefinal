@@ -1,13 +1,20 @@
-'use client'
+"use client";
 
-import { useCallback, useEffect, useRef } from 'react'
-import type { Widget } from '@/types'
+import { useCallback, useEffect, useRef } from "react";
+import type { Widget } from "@/types";
+
+// Strip ES module syntax so Widget() becomes a plain global function in the iframe
+function sanitizeCode(raw: string): string {
+  return raw
+    .replace(/export\s+default\s+function\s+/g, "function ")
+    .replace(/^\s*export\s+default\s+\w+\s*;?\s*$/gm, "");
+}
 
 interface WidgetRendererProps {
-  widget: Widget
+  widget: Widget;
   /** Called when the widget invokes WidgetAPI.notify() */
-  onNotify?: (message: string, type: string) => void
-  className?: string
+  onNotify?: (message: string, type: string) => void;
+  className?: string;
 }
 
 // ─── iframe HTML generator ────────────────────────────────────────────────────
@@ -16,6 +23,7 @@ function buildIframeHtml(
   code: string,
   initialStorage: Record<string, unknown>,
 ): string {
+  const safe = sanitizeCode(code);
   return `<!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -77,7 +85,7 @@ window.WidgetAPI={
 };
 </script>
 <script type="text/babel" data-presets="react">
-${code}
+${safe}
 
 try{
   const root=ReactDOM.createRoot(document.getElementById('root'));
@@ -87,7 +95,7 @@ try{
 }
 </script>
 </body>
-</html>`
+</html>`;
 }
 
 // ─── WidgetRenderer ───────────────────────────────────────────────────────────
@@ -97,91 +105,91 @@ export function WidgetRenderer({
   onNotify,
   className,
 }: WidgetRendererProps) {
-  const iframeRef = useRef<HTMLIFrameElement>(null)
+  const iframeRef = useRef<HTMLIFrameElement>(null);
   // Mutable storage ref so storage.set updates are reflected in storage.get
-  const storageRef = useRef<Record<string, unknown>>({ ...widget.storage })
+  const storageRef = useRef<Record<string, unknown>>({ ...widget.storage });
 
   // Keep storageRef in sync when widget prop changes (e.g., after a save)
   useEffect(() => {
-    storageRef.current = { ...widget.storage }
-  }, [widget.storage])
+    storageRef.current = { ...widget.storage };
+  }, [widget.storage]);
 
   const handleMessage = useCallback(
     async (event: MessageEvent) => {
-      const iframe = iframeRef.current
-      if (!iframe || !event.data || typeof event.data !== 'object') return
+      const iframe = iframeRef.current;
+      if (!iframe || !event.data || typeof event.data !== "object") return;
       // Only handle messages from our iframe
-      if (event.source !== iframe.contentWindow) return
+      if (event.source !== iframe.contentWindow) return;
 
       const { type, key, val, url, opts, id, msg, notifyType } = event.data as {
-        type: string
-        key?: string
-        val?: unknown
-        url?: string
-        opts?: RequestInit
-        id?: string
-        msg?: string
-        notifyType?: string
-      }
+        type: string;
+        key?: string;
+        val?: unknown;
+        url?: string;
+        opts?: RequestInit;
+        id?: string;
+        msg?: string;
+        notifyType?: string;
+      };
 
       switch (type) {
-        case 'storage.get': {
-          const value = storageRef.current[key ?? '']
+        case "storage.get": {
+          const value = storageRef.current[key ?? ""];
           iframe.contentWindow?.postMessage(
-            { type: 'storage.response', key, id, value },
-            '*',
-          )
-          break
+            { type: "storage.response", key, id, value },
+            "*",
+          );
+          break;
         }
 
-        case 'storage.set': {
+        case "storage.set": {
           if (key) {
-            storageRef.current = { ...storageRef.current, [key]: val }
+            storageRef.current = { ...storageRef.current, [key]: val };
             // Persist to DB in the background – fire and forget
             fetch(`/api/widgets/${widget.id}/storage`, {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ key, val }),
-            }).catch(() => {})
+            }).catch(() => {});
           }
-          break
+          break;
         }
 
-        case 'fetch': {
+        case "fetch": {
           try {
-            const res = await fetch('/api/widget-proxy', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+            const res = await fetch("/api/widget-proxy", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ widgetId: widget.id, url, options: opts }),
-            })
-            const data = res.ok ? await res.json() : null
-            const errorMsg = res.ok ? undefined : `HTTP ${res.status}`
+            });
+            const data = res.ok ? await res.json() : null;
+            const errorMsg = res.ok ? undefined : `HTTP ${res.status}`;
             iframe.contentWindow?.postMessage(
-              { type: 'fetch.response', id, data, error: errorMsg },
-              '*',
-            )
+              { type: "fetch.response", id, data, error: errorMsg },
+              "*",
+            );
           } catch (err) {
             iframe.contentWindow?.postMessage(
-              { type: 'fetch.response', id, data: null, error: String(err) },
-              '*',
-            )
+              { type: "fetch.response", id, data: null, error: String(err) },
+              "*",
+            );
           }
-          break
+          break;
         }
 
-        case 'notify': {
-          onNotify?.(msg ?? '', notifyType ?? 'info')
-          break
+        case "notify": {
+          onNotify?.(msg ?? "", notifyType ?? "info");
+          break;
         }
       }
     },
     [widget.id, onNotify],
-  )
+  );
 
   useEffect(() => {
-    window.addEventListener('message', handleMessage)
-    return () => window.removeEventListener('message', handleMessage)
-  }, [handleMessage])
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, [handleMessage]);
 
   return (
     <iframe
@@ -190,7 +198,12 @@ export function WidgetRenderer({
       sandbox="allow-scripts"
       className={className}
       title={widget.name}
-      style={{ border: 'none', width: '100%', height: '100%', display: 'block' }}
+      style={{
+        border: "none",
+        width: "100%",
+        height: "100%",
+        display: "block",
+      }}
     />
-  )
+  );
 }
