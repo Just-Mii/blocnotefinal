@@ -137,7 +137,10 @@ export default function NoteEditor({
   useEffect(() => {
     fetch('/api/tags')
       .then((r) => r.json())
-      .then((d) => Array.isArray(d) && setAllTags(d))
+      .then((d) => {
+        const list = Array.isArray(d) ? d : (d.data ?? [])
+        setAllTags(list)
+      })
       .catch(console.error)
 
     fetch('/api/projects')
@@ -260,8 +263,9 @@ export default function NoteEditor({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name }),
       })
-      const tag = await res.json()
-      if (tag.id) {
+      const json = await res.json()
+      const tag = json.data ?? json
+      if (tag?.id) {
         setAllTags((prev) => [...prev.filter((t) => t.id !== tag.id), tag])
         await addTag(tag)
       }
