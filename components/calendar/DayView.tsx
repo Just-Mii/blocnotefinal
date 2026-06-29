@@ -77,7 +77,7 @@ export default function DayView({ date, notes, journal, onRefresh }: DayViewProp
             body: JSON.stringify({ date, content: value }),
           })
           setJournalStatus('saved')
-          onRefresh()
+          // on ne refresh pas pendant l'édition pour ne pas couper la frappe
         } catch {
           setJournalStatus('idle')
         }
@@ -103,11 +103,11 @@ export default function DayView({ date, notes, journal, onRefresh }: DayViewProp
       })
       const data = await res.json()
       if (data.note) {
+        // on met à jour le state local sans refresh pour éviter de fermer l'éditeur
         setLocalNotes((prev) => ({ ...prev, [hour]: data.note }))
-        onRefresh()
       }
     },
-    [date, onRefresh]
+    [date]
   )
 
   const handleCopySlot = useCallback(
