@@ -1,0 +1,132 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-background text-text-primary antialiased;
+    font-feature-settings: 'rlig' 1, 'calt' 1;
+  }
+
+  /* Focus ring */
+  :focus-visible {
+    @apply outline-none ring-2 ring-accent/50 ring-offset-1 ring-offset-background;
+  }
+
+  /* Selection */
+  ::selection {
+    background-color: rgba(124, 58, 237, 0.35);
+    color: #e2e8f0;
+  }
+
+  /* ── Scrollbar ──────────────────────────────────────────── */
+  ::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 99px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.18);
+  }
+
+  /* Firefox */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+  }
+
+  /* ── Typography base ────────────────────────────────────── */
+  h1, h2, h3, h4, h5, h6 {
+    @apply text-text-primary font-semibold;
+    line-height: 1.3;
+  }
+
+  p {
+    @apply text-text-secondary;
+    line-height: 1.6;
+  }
+
+  a {
+    @apply text-accent-light hover:text-accent transition-colors duration-200;
+  }
+
+  code {
+    @apply font-mono text-sm bg-surface-elevated px-1.5 py-0.5 rounded text-accent-light;
+  }
+
+  pre code {
+    @apply bg-transparent p-0;
+  }
+
+  hr {
+    @apply border-border;
+  }
+}
+
+@layer utilities {
+  /* ── Blink animation for timer indicator ────────────────── */
+  .animate-blink {
+    animation: blink 1.2s ease-in-out infinite;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.15; }
+  }
+
+  /* ── Fade in ────────────────────────────────────────────── */
+  .animate-fade-in {
+    animation: fadeIn 0.15s ease-out both;
+  }
+
+  /* ── Slide in from left ─────────────────────────────────── */
+  .animate-slide-in {
+    animation: slideIn 0.2s ease-out both;
+  }
+
+  /* ── Glass surface ──────────────────────────────────────── */
+  .glass {
+    background: rgba(30, 30, 46, 0.8);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  /* ── Tabular numbers for timer display ──────────────────── */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ── Truncate single line ───────────────────────────────── */
+  .truncate-1 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+  }
+
+  /* ── Surface border glow (accent focus) ─────────────────── */
+  .ring-accent-glow {
+    box-shadow: 0 0 0 1px rgba(124, 58, 237, 0.5),
+                0 0 12px rgba(124, 58, 237, 0.15);
+  }
+}
