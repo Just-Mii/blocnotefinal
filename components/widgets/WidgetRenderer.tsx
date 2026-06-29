@@ -195,7 +195,7 @@ export function WidgetRenderer({
     <iframe
       ref={iframeRef}
       srcDoc={buildIframeHtml(widget.code, storageRef.current)}
-      sandbox="allow-scripts"
+      sandbox="allow-scripts allow-same-origin"
       className={className}
       title={widget.name}
       style={{
